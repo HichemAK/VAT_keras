@@ -15,7 +15,8 @@ input_shape = (28, 28, 1)
 (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
 
 # On ne garde que 100 images labellisées tirées aléatoirement de x_train tout en gardant 10 exemples de chaque classe
-x_train, x_temp, y_train, y_temp = train_test_split(x_train, y_train, train_size=100, stratify=y_train, random_state=12375)
+x_train, x_temp, y_train, y_temp = train_test_split(x_train, y_train, train_size=100, stratify=y_train,
+                                                    random_state=12375)
 
 # Validation set (on garde 100 exemples de chaque classe pou la validation)
 x_ul, x_val, _, y_val = train_test_split(x_temp, y_temp, test_size=1000, stratify=y_temp, random_state=1627)
@@ -37,7 +38,6 @@ print(x_val.shape[0], "val samples")
 print(x_ul.shape[0], "unlabeled samples")
 print(x_test.shape[0], "test samples")
 
-
 # One-hot encoding des classes
 y_train = keras.utils.to_categorical(y_train, num_classes)
 y_val = keras.utils.to_categorical(y_val, num_classes)
@@ -50,7 +50,7 @@ model = VAT(eps=2)
 
 # Générateur de données utilisé pour l'entrainement
 def data_generator(x_train, x_ul, y_train,
-                 batch_size_l, batch_size_ul):
+                   batch_size_l, batch_size_ul):
     x_all = np.concatenate([x_train, x_ul])
     while True:
         sample_l = np.random.randint(x_train.shape[0], size=batch_size_l)
@@ -59,7 +59,7 @@ def data_generator(x_train, x_ul, y_train,
 
         sample_ul = np.random.randint(x_all.shape[0], size=batch_size_ul)
         sample_x_ul = x_all[sample_ul]
-        yield (sample_x_l, sample_x_ul), (sample_y_l, )
+        yield (sample_x_l, sample_x_ul), (sample_y_l,)
 
 
 # Batch size utilisé pour calculer l'erreur de classification et l'erreur R_vadv respectivement
@@ -68,22 +68,24 @@ batch_size_ul = 256
 epochs = 300
 
 # On implémente un Early Stopping avec patience = 15
-callback = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=50, mode='max', restore_best_weights=True)
+early_stopping = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=20, mode='max',
+                                               restore_best_weights=True)
+reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='val_accuracy', factor=0.5, mode='max',
+                                              patience=10, min_lr=0.00001)
 
 # Les paramètres par défaut de Adam ont été utilisés
-adam = keras.optimizers.Adam(learning_rate=10**-4)
+adam = keras.optimizers.Adam(learning_rate=10 ** -3)
 model.compile(optimizer=adam)
 
 # Début de l'entrainement
 h = model.fit(data_generator(x_train, x_ul, y_train, batch_size_l, batch_size_ul), validation_data=(x_val, y_val),
-              callbacks=[callback], epochs=epochs, steps_per_epoch=200)
+              callbacks=[early_stopping, reduce_lr], epochs=epochs, steps_per_epoch=200)
 
 # Evaluation sur le Test Set
 score = model.evaluate(x_test, y_test, verbose=0)
 print("Test loss:", score[0])
 print("Test accuracy:", score[1])
 
-
 # NOTES:
-# Test loss: 0.5341874957084656
-# Test accuracy: 0.8622000217437744
+# Test loss: 0.14595909416675568
+# Test accuracy: 0.9527999758720398
