@@ -15,7 +15,7 @@ input_shape = (28, 28, 1)
 # On ne garde que 100 images labellisées tirées aléatoirement de x_train tout en gardant 10 exemples de chaque classe
 x_train, x_temp, y_train, y_temp = train_test_split(x_train, y_train, train_size=100, stratify=y_train, random_state=12375)
 
-# Validation set (on garde 100 exemples de chaque classe pou la validation)
+# Validation set (on garde 100 exemples de chaque classe pour la validation)
 _, x_val, _, y_val = train_test_split(x_temp, y_temp, test_size=1000, stratify=y_temp, random_state=1627)
 
 # On divise les valeurs des pixels par 255 pour les ramener dans l'intervalle [0, 1]
@@ -39,7 +39,7 @@ y_val = keras.utils.to_categorical(y_val, num_classes)
 y_test = keras.utils.to_categorical(y_test, num_classes)
 
 # Le modèle est une suite de Relu 2D Convolutional Layers 3x3 avec un MaxPooling2D entre chaque couche.
-# On ajoute une couche Dense avec dropout + softmax à la fin pour classifier l'image.
+# On ajoute une couche Dense avec dropout et un softmax à la fin pour classifier l'image.
 model = keras.Sequential(
     [
         keras.Input(shape=input_shape),
@@ -71,6 +71,6 @@ print("Test loss:", score[0])
 print("Test accuracy:", score[1])
 
 
-# NOTES:
+# Meilleur résultat obtenu:
 # Test loss: 0.5341874957084656
 # Test accuracy: 0.8622000217437744

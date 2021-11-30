@@ -2,10 +2,9 @@ import numpy as np
 from tensorflow import keras
 from tensorflow.keras import layers
 from sklearn.model_selection import train_test_split
-
-# Nombre de classes
 from vat_model import VAT
 
+# Nombre de classes
 num_classes = 10
 
 # Dimension des données en entrée (image noir et blanc 28x28)
@@ -18,7 +17,7 @@ input_shape = (28, 28, 1)
 x_train, x_temp, y_train, y_temp = train_test_split(x_train, y_train, train_size=100, stratify=y_train,
                                                     random_state=12375)
 
-# Validation set (on garde 100 exemples de chaque classe pou la validation)
+# Validation set (on garde 100 exemples de chaque classe pour la validation)
 x_ul, x_val, _, y_val = train_test_split(x_temp, y_temp, test_size=1000, stratify=y_temp, random_state=1627)
 
 # On divise les valeurs des pixels par 255 pour les ramener dans l'intervalle [0, 1]
@@ -44,13 +43,16 @@ y_val = keras.utils.to_categorical(y_val, num_classes)
 y_test = keras.utils.to_categorical(y_test, num_classes)
 
 # Le modèle est une suite de Relu 2D Convolutional Layers 3x3 avec un MaxPooling2D entre chaque couche.
-# On ajoute une couche Dense avec dropout + softmax à la fin pour classifier l'image.
+# On ajoute une couche Dense avec dropout et un softmax à la fin pour classifier l'image.
+# On choisit epsilon=2 pour le modèle avec VAT. C'est la valeur utilisée dans l'article
 model = VAT(eps=2)
 
 
 # Générateur de données utilisé pour l'entrainement
 def data_generator(x_train, x_ul, y_train,
                    batch_size_l, batch_size_ul):
+    # Ce générateur produit à chaque itération un batch d'images labellisées et un batch d'images non-labellisées
+    # tirés aléatoirement de l'ensemble des images labellisées et l'ensemble des images du dataset respectivement
     x_all = np.concatenate([x_train, x_ul])
     while True:
         sample_l = np.random.randint(x_train.shape[0], size=batch_size_l)
@@ -67,7 +69,7 @@ batch_size_l = 64
 batch_size_ul = 256
 epochs = 300
 
-# On implémente un Early Stopping avec patience = 15
+# On implémente un Early Stopping avec patience = 20
 early_stopping = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=20, mode='max',
                                                restore_best_weights=True)
 reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='val_accuracy', factor=0.5, mode='max',
@@ -86,6 +88,6 @@ score = model.evaluate(x_test, y_test, verbose=0)
 print("Test loss:", score[0])
 print("Test accuracy:", score[1])
 
-# NOTES:
-# Test loss: 0.14595909416675568
-# Test accuracy: 0.9527999758720398
+# Meilleur résultat obtenu:
+# Test loss: 0.09680350124835968
+# Test accuracy: 0.972100019454956
