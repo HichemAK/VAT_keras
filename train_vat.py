@@ -89,5 +89,5 @@ print("Test loss:", score[0])
 print("Test accuracy:", score[1])
 
 # Meilleur résultat obtenu:
-# Test loss: 0.09680350124835968
+# Test loss (Cross entropy): 0.09680350124835968
 # Test accuracy: 0.972100019454956
